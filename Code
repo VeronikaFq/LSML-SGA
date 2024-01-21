@@ -1,0 +1,38 @@
+import findspark
+findspark.init()
+
+import sys
+
+from pyspark import SparkContext
+from pyspark.sql import SparkSession, Row
+
+sc = SparkContext(appName="sga")
+se = SparkSession(sc)
+
+
+df = se.read.csv('hdfs:/data/clickstream.csv', header=True, sep = '\t')
+df.registerTempTable("df")
+
+
+result = se.sql("""
+select route, count(*) as count from
+
+(select user_id, session_id, array_join(collect_list(event_page),'-') AS route
+from
+(select * from
+(select *, 
+max(error_time) over (partition by user_id, session_id) as last_time_with_error
+from
+(select *, 
+case when event_type like '%error%' then timestamp else null end as error_time, 
+max(timestamp) over (partition by user_id, session_id) as last_time,
+LAG(event_page, 1, 'nothing') OVER (partition by user_id, session_id order by timestamp, event_page) as preveous_page
+from df))
+where event_page != preveous_page
+and timestamp < COALESCE(last_time_with_error, last_time+1))
+group by user_id, session_id)
+
+group by route
+order by count desc
+limit 30
+""")
