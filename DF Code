@@ -1,0 +1,24 @@
+import pyspark.sql.functions as f
+from pyspark.sql.window import Window
+
+df = spark.read.csv('clickstream.csv', header=True, sep='\t')
+
+df_error_time = df.withColumn("error_time", 
+                   f.when(f.col("event_type").like("%error%"), f.col("timestamp")).otherwise(0))
+
+df_error_time = df_error_time.withColumn("error_time_in_group", 
+                                         f.max(f.col("error_time")).over(Window.partitionBy("user_id", "session_id").orderBy("timestamp", "event_type")))
+
+df_without_errors = df_error_time.filter(f.col("error_time_in_group")==0)
+
+df_prev_page = df_without_errors.withColumn("prev_page",
+                             f.lag("event_page", 1, "nothing").over(Window.partitionBy("user_id", "session_id").orderBy("timestamp", "event_type")))
+
+df_with_correct_routes = df_prev_page.filter(f.col("event_page") != f.col("prev_page"))
+
+df_with_correct_routes = df_with_correct_routes.withColumn("route", f.concat_ws('-', f.collect_list("event_page").over(Window.partitionBy("user_id", "session_id").orderBy("timestamp", "event_type"))))
+
+result = df_with_correct_routes.groupby('user_id', 'session_id').agg(f.max('route').alias('result_route'))
+top_30 = result.groupby('result_route').agg(f.count('*').alias('count')).orderBy(f.desc('count')).limit(30)
+
+top_30.show(30)
