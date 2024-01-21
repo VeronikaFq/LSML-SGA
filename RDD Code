@@ -1,0 +1,14 @@
+df = spark.read.csv('clickstream.csv', header=True, sep='\t')
+
+errors = df.rdd(lambda x: 'error' in x.event_type).map(lambda x: ((
+    x.user_id, x.session_id), x.timestamp)).reduceByKey(lambda x,y: min(x,y))
+
+df_without_errors = df.rdd.map(lambda x: ((
+    x.user_id, x.session_id), x)).leftOuterJoin(errors).filter(lambda x: x[1][1] is None or x[1][0].timestamp < row[1][1]).map(lambda x: x[1][0])
+
+routes = df_without_errors.map(lambda x: ((
+    x.user_id, x.session_id), x.event_page)).groupByKey().map(lambda x: (x[0], list(x[1])))
+
+top_30 = routes.map(lambda x: (x[0], '-'.join ([i for a, b in zip(x[1], x[1][1:] + [None]) if a!=b]))).map(
+    lambda x: (x[1], 1)).reduceByKey(lambda x, y: x+y).sortBy(lambda x: x[1], ascending=False).take(30)
+
