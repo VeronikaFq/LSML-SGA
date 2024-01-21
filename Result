@@ -1,0 +1,34 @@
++--------------------+-----+
+|               route|count|
++--------------------+-----+
+|                main| 1792|
+|        main-archive|  253|
+|         main-rabota|  250|
+|          main-bonus|  214|
+|       main-internet|  199|
+|           main-news|  174|
+|        main-tariffs|  168|
+|         main-online|  134|
+|          main-vklad|  109|
+| main-archive-rabota|   51|
+| main-rabota-archive|   43|
+|  main-bonus-archive|   39|
+|main-internet-rabota|   38|
+|   main-rabota-bonus|   38|
+|main-archive-inte...|   37|
+|    main-rabota-news|   35|
+|main-internet-arc...|   33|
+|   main-bonus-rabota|   33|
+|main-rabota-internet|   32|
+|    main-news-rabota|   31|
+|  main-internet-news|   30|
+|  main-news-internet|   30|
+|   main-archive-news|   29|
+| main-internet-bonus|   28|
+|main-archive-tariffs|   28|
+|main-tariffs-archive|   28|
+|  main-rabota-online|   26|
+|     main-news-bonus|   26|
+|  main-tariffs-bonus|   26|
+|   main-news-archive|   25|
++--------------------+-----+
